@@ -1,19 +1,53 @@
-# Dependencies
-node_modules/
+# Python
 __pycache__/
-*.pyc
-
-# Environment variables
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
 .env
+*.db
+*.sqlite3
 
-# Build directories
-build/
-dist/
+# Node
+node_modules/
+/frontend/build
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
 
-# IDE files
-.vscode/
+# IDEs and editors
 .idea/
-
-# OS files
+.vscode/
+*.swp
+*.swo
 .DS_Store
-Thumbs.db
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover 
