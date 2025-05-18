@@ -39,7 +39,7 @@ def init_db():
      # Check if the database directory exists and create if not
      # if exist_ok=True then nothing happens
      os.makedirs(DATABASE_PATH.parent, exist_ok=True)
-     conn = get_db_connection
+     conn = get_db_connection()
      conn.execute('''
      CREATE TABLE IF NOT EXISTS tasks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,  -- Unique identifier for each task, auto-incremented

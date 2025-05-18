@@ -40,7 +40,7 @@ class TaskBase(BaseModel):
      title: str
      description: Optional[str] = None
      due_date: Optional[str] = None
-     priority: Optional[str] = 1
+     priority: Optional[int] = 1
 
 # === Input Models ===
 class TaskCreate(TaskBase):
