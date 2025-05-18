@@ -118,15 +118,133 @@ def create_task(task: TaskCreate):
 
 @app.get("/tasks/", response_model=List[Task])
 def read_tasks():
+    """
+    Get all tasks endpoint and return a list of tasks
+    Returns a list of all tasks in the database.
+    """
     conn = get_db_connection()
     tasks = conn.execute("SELECT * FROM tasks").fetchall()
     conn.close()
+
     #Convert the rows to dics and handle boolean conversion
     taskList = []
-    for item in tasks:
-        task_dict = dict(item)
+    for task in tasks:
+        task_dict = dict(task)
         task_dict["is_completed"] =bool(task_dict["is_completed"])
         taskList.append(task_dict)
+
     return taskList
 
+@app.get("/tasks/{task_id}", response_model=Task)
+def read_task(task_id: int):
+    """
+    Get a specific task by ID endpoint.
+    Returns a single task or raises a 404 error if Task DNE
+    """
+    conn = get_db_connection()
+    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id)).fetchone()
+    conn.close()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task_dict = dict(task)
+    task_dict["is_completed"] = bool(task_dict["is_completed"])
+    return task_dict
+    
+@app.put("/tasks/{task_id}", response_model=Task)
+def update_task(task_id:int, task: TaskUpdate):
+    """
+    Update a task endpoint.
+    Accepts a task object with fields to update and returns the updated task.
+    Only fields that are provided will be updated.
+    """
+    conn = get_db_connection()
+    existing_task = conn.execute("SELECT * FROM tasks WHERE id = ?",(task_id,)).fetchone()
+    if existing_task is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+    existing_task_dict = dict(existing_task)
+
+    if hasattr(task, "model_dump"):
+        task_data = task.model_dump()
+    else:
+        task_data = task.dict()
+
+    update_data = {k: v for k, v in task_data.items() if v is not None}
+
+    if update_data:
+        set_expressions = []
+        for key in update_data.keys():
+            expression = f"{key} = ?"
+            set_expressions.append(expression)
+        set_values = ", ".join(set_expressions)
+
+        if "is_completed" in update_data:
+            update_data["is_completed"] = 1 if update_data["is_completed"] else 0
+        values = list(update_data.values())
+        values.append(task_id)
+
+        # Execute the update query
+        conn.execute(f"UPDATE tasks SET {set_values} WHERE id = ?", values)
+        conn.commit()
+
+    # Get the updated task
+    updated_task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    conn.close()
+
+    # Convert the row to a dictionary and handle boolean conversion
+    updated_task_dict = dict(updated_task)
+    updated_task_dict["is_completed"] = bool(updated_task_dict["is_completed"])
+    
+    # Return the updated task, 
+    return updated_task_dict
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_200_OK)
+def delete_task(task_id: int):
+    """
+    Delete a task endpoint.
+    Deletes a task by ID and returns a sucess message.
+    """
+    conn = get_db_connection()
+    existing_task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    if existing_task is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+    existing_task_dict = dict(existing_task)
+
+    conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+    return{"message:" "Task deleted succesfully"}
+
+@app.get("/stats/", response_model=TaskStats)
+def get_task_stats():
+    conn = get_db_connection()
+    total = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    completed = conn.execute("SELECT COUNT(*) FROM tasks WHERE is_completeed = 1").fetchone()[0]
+    pending = total - completed
+    conn.close()
+    return {"total": total, "completed": completed, "pending":pending}
+
+@app.get("/")
+def read_root():
+    """
+    Root endpoint
+    Returns basic information about API
+    """
+    return{
+     "name": "TaskMaster API",
+     "version": "1.0.0",
+     "description": "A simple task management API",
+     "endpoints": {
+          "GET /": "This information",
+          "GET /tasks/": "Get all tasks",
+          "POST /tasks/": "Create a new task",
+          "GET /tasks/{id}": "Get a specific task",
+          "PUT /tasks/{id}": "Update a task",
+          "DELETE /tasks/{id}": "Delete a task",
+          "GET /stats/": "Get task statistics"
+          }
+     }
 
