@@ -52,9 +52,9 @@ def init_db():
      ''')
      conn.commit()
      conn.close()
-     print(f"Database initialized at:{DATABASE_PATH}")
+     # print(f"Database initialized at:{DATABASE_PATH}")
 
 # This allows running this script directly to initialize the database
 if __name__ == "__main__":
     init_db()
-    print("Database setup complete. You can now run the TaskMaster API.")
+    # print("Database setup complete. You can now run the TaskMaster API.")
